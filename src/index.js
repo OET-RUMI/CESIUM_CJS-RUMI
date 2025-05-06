@@ -215,15 +215,8 @@ if (!CESIUM_ION_ACCESS_TOKEN || CESIUM_ION_ACCESS_TOKEN === 'your_access_token_h
     updateGlobeMaterial(); // Update the material when exaggeration changes
   }
 
-  // Setup Knockout bindings for sliders
-  Cesium.knockout.track(viewModel);
-  const toolbar = document.getElementById("toolbar");
-  Cesium.knockout.applyBindings(viewModel, toolbar);
-  for (const name in viewModel) {
-    if (viewModel.hasOwnProperty(name)) {
-      Cesium.knockout.getObservable(viewModel, name).subscribe(updateExaggeration);
-    }
-  }
+  //Removed Setup Knockout bindings for sliders
+
 
   // Apply the initial globe material
   updateGlobeMaterial();
@@ -231,21 +224,21 @@ if (!CESIUM_ION_ACCESS_TOKEN || CESIUM_ION_ACCESS_TOKEN === 'your_access_token_h
 
   // ===== Debug Panel Setup =====
   // Create a debug panel to show orientation information
-  const debugPanel = document.createElement('div');
-  debugPanel.id = 'debugPanel';
-  debugPanel.style.position = 'absolute';
-  debugPanel.style.bottom = '30px';
-  debugPanel.style.right = '10px';
-  debugPanel.style.padding = '10px';
-  debugPanel.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-  debugPanel.style.color = 'white';
-  debugPanel.style.borderRadius = '5px';
-  debugPanel.style.fontFamily = 'monospace';
-  debugPanel.style.fontSize = '12px';
-  debugPanel.style.maxWidth = '300px';
-  debugPanel.style.maxHeight = '200px';
-  debugPanel.style.overflow = 'auto';
-  debugPanel.innerHTML = `
+  const rovOrientationInfo = document.createElement('div');
+  rovOrientationInfo.id = 'rovOrientationInfo';
+  rovOrientationInfo.style.position = 'absolute';
+  rovOrientationInfo.style.bottom = '30px';
+  rovOrientationInfo.style.right = '10px';
+  rovOrientationInfo.style.padding = '10px';
+  rovOrientationInfo.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+  rovOrientationInfo.style.color = 'white';
+  rovOrientationInfo.style.borderRadius = '5px';
+  rovOrientationInfo.style.fontFamily = 'monospace';
+  rovOrientationInfo.style.fontSize = '12px';
+  rovOrientationInfo.style.maxWidth = '300px';
+  rovOrientationInfo.style.maxHeight = '200px';
+  rovOrientationInfo.style.overflow = 'auto';
+  rovOrientationInfo.innerHTML = `
     <h3>ROV Orientation Info</h3>
     <div id="orientationInfo">
       <div>Heading: <span id="headingValue">N/A</span>°</div>
@@ -255,12 +248,12 @@ if (!CESIUM_ION_ACCESS_TOKEN || CESIUM_ION_ACCESS_TOKEN === 'your_access_token_h
     </div>
     <button id="visualizeDirectionBtn" style="margin-top:10px">Show Direction Vector</button>
   `;
-  document.body.appendChild(debugPanel);
+  document.body.appendChild(rovOrientationInfo);
   
       // ===== Information Setup =====
   // Create second Panel for Comments aditional data above ROV panel
   const infoPanel = document.createElement('div');
-  infoPanel.id = 'debugPanel';
+  infoPanel.id = 'rovOrientationInfo';
   infoPanel.style.position = 'absolute';
   infoPanel.style.bottom = '210px';
   infoPanel.style.right = '10px';
@@ -276,9 +269,9 @@ if (!CESIUM_ION_ACCESS_TOKEN || CESIUM_ION_ACCESS_TOKEN === 'your_access_token_h
   infoPanel.innerHTML = `
     <h3>ROV Sensor Info</h3>
     <div id="orientationInfo">
-      <div>Temperature: <span id="">N/A</span>°</div>
-      <div>Oxygen Levels: <span id="">N/A</span></div>
-      <div>Comments: <span id="">N/A</span></div>
+      <div>Temperature: <span id="tempValue">N/A</span>°</div>
+      <div>Oxygen Levels: <span id="oxyLevel">N/A</span> mg/L</div>
+      <div>Comments: <span id="comments">N/A</span></div>
     </div>
     <button id="visualizeDirectionBtn" style="margin-top:10px">Show Direction Vector</button>
   `;
@@ -396,13 +389,40 @@ if (!CESIUM_ION_ACCESS_TOKEN || CESIUM_ION_ACCESS_TOKEN === 'your_access_token_h
                 `Lat: ${lat}°, Lon: ${lon}°, Alt: ${alt}m`;
               document.getElementById('velocityValue').textContent = velocity;
 
+              //Get the temperature from the file TEST    IGNORE FOR NOW
+              /* czmlDataSource.then(function(dataSource){
+
+              const entities = dataSource.entities.values;
+
+              let o2Text = "O2 level not found.";
+              entities.forEach(function(entity) {
+                  if (entity.label && entity.label.text) {
+                      const text = entity.label.text;
+                      const o2Regex = /O2:\s([0-9.]+)\smg\/L/;
+                      const match = text.match(o2Regex);
+                      if (match && match[1]) {
+                          // If O2 value is found, update o2Text
+                          o2Text = `The O2 level is: ${match[1]} mg/L`;
+                      }
+                  }
+              }
+            )
+            }
+          );
+          */
+            
+              //const comments;    IGNORE FOR NOW
               
-              document.getElementById('').textContent = heading.toFixed(1);
-              document.getElementById('quaternionValue').textContent =
-                `[${qx.toFixed(3)}, ${qy.toFixed(3)}, ${qz.toFixed(3)}, ${qw.toFixed(3)}]`;
-              document.getElementById('positionValue').textContent =
-                `Lat: ${lat}°, Lon: ${lon}°, Alt: ${alt}m`;
-              document.getElementById('velocityValue').textContent = velocity;
+            
+             //document.getElementById('tempValue').textContent;    IGNORE FOR NOW
+
+
+
+             //document.getElementById('oxyLevel').textContent = oxygen;    IGNORE FOR NOW
+
+
+
+             // document.getElementById('comment').textContent;   IGNORE FOR NOW
 
               // Store heading history to detect changes
               const headingHistory = window.headingHistory || [];
@@ -429,7 +449,9 @@ if (!CESIUM_ION_ACCESS_TOKEN || CESIUM_ION_ACCESS_TOKEN === 'your_access_token_h
         }
       });
 
+      
       // Load the ROV model
+     
       try {
         console.log("Loading ROV model from Ion...");
         const modelResource = await Cesium.IonResource.fromAssetId(3163466);
@@ -437,11 +459,49 @@ if (!CESIUM_ION_ACCESS_TOKEN || CESIUM_ION_ACCESS_TOKEN === 'your_access_token_h
         // Create model with manual orientation adjustment
         herculesEntity.model = new Cesium.ModelGraphics({
           uri: modelResource,
-          scale: 0.04, // Scale to represent approximately 4 meters length
-          minimumPixelSize: 64,
-          maximumScale: 20,
+          scale: 0.4, // Scale to represent approximately 4 meters length
           runAnimations: true,
-        });
+        },
+      );
+          try {
+        // const videoElement = document.getElementById("trailer");
+        
+             // Video's offset above the model
+             const offsetInMeters = 3.0;
+
+            // Define a CallbackProperty that returns the offset position
+            const videoPosition = new Cesium.CallbackProperty((time, result) => {
+              const modelPosition = herculesEntity.position.getValue(time);
+              if (!modelPosition) return undefined;
+
+                // Convert to Cartographic to adjust height
+                const modelCart = Cesium.Cartographic.fromCartesian(modelPosition);
+                modelCart.height += offsetInMeters; // add vertical offset
+              return Cesium.Cartographic.toCartesian(modelCart, Cesium.Ellipsoid.WGS84, result);
+              }, false);
+      
+              const videoEntity = viewer.entities.add({
+                name: "Video Plane",
+                position: videoPosition,
+
+                box: {
+                    dimensions: new Cesium.Cartesian3(5.0, 0.003, 2.5), // width, depth, height
+                    material: Cesium.Color.WHITE.withAlpha(1.0)
+                    /*material: new Cesium.ImageMaterialProperty({
+                      image: videoElement,
+                      transparent: false
+                    })*/
+                }
+          });
+          videoEntity.orientation = new Cesium.CallbackProperty((time, result) => {
+          const ori = herculesEntity.orientation?.getValue(time, result);
+          return ori ?? Cesium.Quaternion.IDENTITY;
+        }, false);
+          //videoElement.play();
+        }
+          catch(err) {
+            console.error("Video Error:", err)
+          }
 
         // Add a direction arrow to visualize heading
         let directionArrow = viewer.entities.add({
@@ -520,6 +580,8 @@ if (!CESIUM_ION_ACCESS_TOKEN || CESIUM_ION_ACCESS_TOKEN === 'your_access_token_h
   } catch (err) {
     console.error("Error loading data:", err);
   }
+
+
 
   // Add UI controls for toggling visualization features
   if (typeof Sandcastle !== 'undefined') {
