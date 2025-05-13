@@ -513,7 +513,7 @@ if (!CESIUM_ION_ACCESS_TOKEN || CESIUM_ION_ACCESS_TOKEN === 'your_access_token_h
         herculesEntity.model = new Cesium.ModelGraphics({
           uri: modelResource,
           scale: 0.4, // Scale to represent approximately 4 meters length
-      );
+      });
           try {
       console.log("Loading video screen for model...");
         // const videoElement = document.getElementById("trailer");
