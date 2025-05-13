@@ -93,18 +93,18 @@ if (!CESIUM_ION_ACCESS_TOKEN || CESIUM_ION_ACCESS_TOKEN === 'your_access_token_h
     const grd = ctx.createLinearGradient(0, 0, 100, 0);
 
     // Deep ocean color scale (cmocean 'deep')
-    grd.addColorStop(d(maxHeight), "#B79E6C");
+    grd.addColorStop(d(maxHeight), "#FAFAE1");
     grd.addColorStop(d(100.0), "#FBFFEE");
-    grd.addColorStop(d(0.0), "#F9FCCA");
-    grd.addColorStop(d(-500.0), "#BDE7AD");
-    grd.addColorStop(d(-1000.0), "#81D2A3");
-    grd.addColorStop(d(-1500.0), "#5AB7A4");
-    grd.addColorStop(d(-2000.0), "#4C9AA0");
-    grd.addColorStop(d(-2500.0), "#437D9A");
-    grd.addColorStop(d(-4000.0), "#3E6194");
-    grd.addColorStop(d(-5000.0), "#424380");
-    grd.addColorStop(d(-8000.0), "#392D52");
-    grd.addColorStop(d(minHeight), "#291C2F");
+    grd.addColorStop(d(0.0), "#E4E4B2");
+    grd.addColorStop(d(-500.0), "#F3EEC7");
+    grd.addColorStop(d(-1000.0), "#0070CC");
+    grd.addColorStop(d(-1500.0), "#0065B8");
+    grd.addColorStop(d(-2000.0), "#4B7CA3");
+    grd.addColorStop(d(-2500.0), "#00437A");
+    grd.addColorStop(d(-4000.0), "#004175");
+    grd.addColorStop(d(-5000.0), "#003866");
+    grd.addColorStop(d(-8000.0), "#002D52");
+    grd.addColorStop(d(minHeight), "#00223D");
 
     ctx.fillStyle = grd;
     ctx.fillRect(0, 0, ramp.width, ramp.height);
@@ -215,12 +215,65 @@ if (!CESIUM_ION_ACCESS_TOKEN || CESIUM_ION_ACCESS_TOKEN === 'your_access_token_h
     updateGlobeMaterial(); // Update the material when exaggeration changes
   }
 
-  //Removed Setup Knockout bindings for sliders
-
 
   // Apply the initial globe material
   updateGlobeMaterial();
   
+    // Fog create fog to imply depth
+    function createFog(){
+      const fragmentShaderSource = `
+      float getDistance(sampler2D depthTexture, vec2 texCoords)
+      {
+          float depth = czm_unpackDepth(texture(depthTexture, texCoords));
+          if (depth == 0.0) {
+              return czm_infinity;
+          }
+          vec4 eyeCoordinate = czm_windowToEyeCoordinates(gl_FragCoord.xy, depth);
+          return -eyeCoordinate.z / eyeCoordinate.w;
+      }
+      float interpolateByDistance(vec4 nearFarScalar, float distance)
+      {
+          float startDistance = nearFarScalar.x;
+          float startValue = nearFarScalar.y;
+          float endDistance = nearFarScalar.z;
+          float endValue = nearFarScalar.w;
+          float t = clamp((distance - startDistance) / (endDistance - startDistance), 0.0, 1.0);
+          return mix(startValue, endValue, t);
+      }
+      vec4 alphaBlend(vec4 sourceColor, vec4 destinationColor)
+      {
+          return sourceColor * vec4(sourceColor.aaa, 1.0) + destinationColor * (1.0 - sourceColor.a);
+      }
+      uniform sampler2D colorTexture;
+      uniform sampler2D depthTexture;
+      uniform vec4 fogByDistance;
+      uniform vec4 fogColor;
+      in vec2 v_textureCoordinates;
+      void main(void)
+      {
+          float distance = getDistance(depthTexture, v_textureCoordinates);
+          vec4 sceneColor = texture(colorTexture, v_textureCoordinates);
+          float blendAmount = interpolateByDistance(fogByDistance, distance);
+          vec4 finalFogColor = vec4(fogColor.rgb, fogColor.a * blendAmount);
+          out_FragColor = alphaBlend(finalFogColor, sceneColor);
+      }
+      `;
+
+    const ellipsoid = viewer.scene.globe.ellipsoid;
+    const postProcessStage = viewer.scene.postProcessStages.add(
+      new Cesium.PostProcessStage({
+        fragmentShader: fragmentShaderSource,
+        uniforms: {
+          fogByDistance: new Cesium.Cartesian4(10, 0.0, 200, 1.0),
+          fogColor: Cesium.Color.fromCssColorString("#001C33"),
+        },
+      }),
+    );
+    }
+
+      //turn on fog
+      createFog();
+
 
   // ===== Debug Panel Setup =====
   // Create a debug panel to show orientation information
@@ -460,10 +513,9 @@ if (!CESIUM_ION_ACCESS_TOKEN || CESIUM_ION_ACCESS_TOKEN === 'your_access_token_h
         herculesEntity.model = new Cesium.ModelGraphics({
           uri: modelResource,
           scale: 0.4, // Scale to represent approximately 4 meters length
-          runAnimations: true,
-        },
       );
           try {
+      console.log("Loading video screen for model...");
         // const videoElement = document.getElementById("trailer");
         
              // Video's offset above the model
