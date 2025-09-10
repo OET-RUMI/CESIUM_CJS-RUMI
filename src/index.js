@@ -3,15 +3,14 @@ var Cesium = require('cesium/Cesium')
 // Import CSS
 import 'cesium/Widgets/widgets.css';
 
-const token =
-  process.env.CESIUM_ION_ACCESS_TOKEN ||
-  process.env.CESIUM_ION_TOKEN ||
-  "";
+// Verify that the Cesium Ion access token is defined
+let CESIUM_ION_ACCESS_TOKEN = window.CESIUM_ION_ACCESS_TOKEN;
 
-if (!token) {
-  console.error("Cesium ion access token is not set.");
+if (!CESIUM_ION_ACCESS_TOKEN || CESIUM_ION_ACCESS_TOKEN === 'your_access_token_here') {
+  console.error('Cesium ion access token is not set.');
+  CESIUM_ION_ACCESS_TOKEN = undefined;
 } else {
-  Cesium.Ion.defaultAccessToken = token;
+  Cesium.Ion.defaultAccessToken = CESIUM_ION_ACCESS_TOKEN;
 }
 
 (async function () {
